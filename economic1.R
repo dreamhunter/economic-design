@@ -64,8 +64,24 @@ mat.min
 dim(mat.min)
 
 
-####### An Economic Model of the xbar control chart ######
-f2 <- function(h=0.76,L=2.99,n=5,a1=1,a2=.1,W=25,Y=50,a4=100,lambda=.05,delta=2,g=0.0167,D=1)
+
+#### economic design for xbar chart ####
+eco.xbar <- function(h=seq(0.1,1,by=.01),L=seq(2,4.5,by=.01),n=1:20,a1=1,a2=.1,W=25,Y=50,a4=100,lambda=.05,delta=2,g=0.0167,D=1,...){
+  # Economic design for xbar chart, minimizing the cost by finding the best sample interval h, control limit L and sample size n
+  # Args:
+  #   h: sample interval
+  #   L: number of s.d. from control limits to center line
+  #   n: sample size
+  #   a1: fixed cost per sample
+  #   a2: cost per unit sampled
+  #   W: cost of finding an assignable cause
+  #   Y: cost of investigating a false alarm
+  #   a4: hourly penalty cost associated with production in the out-of-control state
+  #   lambda: 1/mean time process is in control
+  #   delta: number of s.d. slip when out of control
+  #   g: the time required to take a sample and interpret the result
+  #   D: the time required to find the assignable cause
+  f2 <- function(h,L,n)
   {
     alpha=2*pnorm(-L)
     beta=pnorm(L-delta*sqrt(n))-pnorm(-L-delta*sqrt(n))
@@ -73,35 +89,18 @@ f2 <- function(h=0.76,L=2.99,n=5,a1=1,a2=.1,W=25,Y=50,a4=100,lambda=.05,delta=2,
     cost <- (a1+a2*n)/h + (a4*(h/(1-beta)-tau+g*n+D) + W + Y*alpha*exp(-lambda*h)/(1-exp(-lambda*h)))/(1/lambda+h/(1-beta)-tau+g*n+D)
     return(cost)
   }
-
-## minimum cost design
-h=seq(0.1,1,by=.01); L=seq(2,4.5,by=.01)
-cost.min=f2(n=1,h=h[1],L=L[1])
-  for(n in 1:20){
-    mat=outer(h,L,FUN=f2,n=n)
-    if(cost.min>=min(mat)){
-      n.min=n
-      cost.min=min(mat)
-      mat.min=mat
-    }
-}
-
-cost.min   ## minimum cost
-n.min  ##sample size
-aa <- which(mat.min==min(mat.min),arr.ind=T)
-h[aa[1,][1]]  ##hours between sample
-L[aa[1,][2]]  ##number of standard deviation
-f2()
-
-## Figure 9-24 Page 465 of SQC Douglas
-cost.frame <- NULL
-h=seq(0.1,1,by=.01); L=seq(2,4.5,by=.01)
-  for(n in 1:20){
-    mat=outer(h,L,FUN=f2,n=n)
+  cost.frame <- NULL
+  for(k in n){
+    mat=outer(h,L,FUN=f2,n=k)
     aa <- which(mat==min(mat),arr.ind=T)
-    h[aa[1,][1]]  ##hours between sample
-#    cat(n,L[aa[1,][2]],h[aa[1,][1]],min(mat),"\n")
-    cost.frame <- rbind(cost.frame,c(n,L[aa[1,][2]],h[aa[1,][1]],min(mat)))
+    cost.frame <- rbind(cost.frame,c(k,L[aa[1,][2]],h[aa[1,][1]],min(mat)))
   }
 colnames(cost.frame) <- c("n","Optimum L","Optimum h","Cost")
-cost.frame
+rownames(cost.frame) <- rep("",length(n))
+optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+contour(h,L,outer(h,L,FUN=f2,n=optimum[1]),xlab="h",ylab="L",...)
+return(list(optimum,cost.frame))
+}
+
+eco.xbar(nlevels=50)
+
