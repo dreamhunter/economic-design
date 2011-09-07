@@ -98,11 +98,11 @@ eco.xbar <- function(h=seq(0.1,1,by=.01),L=seq(2,4.5,by=.01),n=1:20,a1=1,a2=.1,W
   colnames(cost.frame) <- c("n","Optimum L","Optimum h","Cost")
   rownames(cost.frame) <- rep("",length(n))
   optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+  par(mar=c(7.1,4.1,2.1,2.1))
   contour(h,L,outer(h,L,FUN=f2,n=optimum[1]),xlab="h",ylab="L",...)
   points(optimum[3],optimum[2],pch=3)
+  mtext(paste("n=",optimum[1],", Opt L=", optimum[2], ", Opt h=",optimum[3], ", Cost=", round(optimum[4],digits=4)),side=1,line=4.5)
   return(list(optimum,cost.frame))
 }
 
 eco.xbar(nlevels=50)
-
-
